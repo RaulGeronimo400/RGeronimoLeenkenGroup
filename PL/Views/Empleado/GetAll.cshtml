@@ -1,0 +1,257 @@
+﻿
+@{
+    ViewBag.Title = "GetAll";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Empleados</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <p>Selecciona un registro para actualizar su informacion o inserta uno nuevo.</p>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-pull-1 pull-right margen">
+            <button type="button" class="btn btn-success" onclick="ShowModal()">Agregar</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="tableEmpleado" class="table table-striped table-hover text-center text-nowrap">
+            <thead>
+                <tr>
+                    <th class="text-center">Editar</th>
+                    <th class="text-center hidden">Id</th>
+                    <th class="text-center">Número Nomina</th>
+                    <th class="text-center">Nombre</th>
+                    <th class="text-center">Apellido Paterno</th>
+                    <th class="text-center">Apellido Materno</th>
+                    <th class="text-center hidden">IdEstado</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Eliminar</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalFormulario" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Insertar Empleado</h4>
+            </div>
+            <div class="modal-body">
+                <p>Favor de compleatar los campos.&hellip;</p>
+                <!-- Id -->
+                <div class="form-group hidden">
+                    <label for="txtIdEmpleado">Id Empleado</label>
+                    <input type="text" id="txtIdEmpleado" class="form-control" placeholder="Id" required>
+                </div>
+
+                <!-- Nombre -->
+                <div class="form-group">
+                    <label for="txtNombre">Nombre</label>
+                    <input type="text" id="txtNombre" class="form-control" placeholder="Nombre(s)" required>
+                </div>
+
+                <!-- Paterno -->
+                <div class="form-group">
+                    <label for="txtPaterno">Paterno</label>
+                    <input type="text" id="txtPaterno" class="form-control" placeholder="Apellido Paterno" required>
+                </div>
+
+                <!-- Materno -->
+                <div class="form-group">
+                    <label for="txtMaterno">Materno</label>
+                    <input type="text" id="txtMaterno" class="form-control" placeholder="Apellido Materno" required>
+                </div>
+
+                <!-- IdEstado -->
+                <div class="form-group">
+                    <label for="ddlEstado">Estado</label>
+                    <select id="ddlEstado" class="form-control" required></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="Validar()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Scripts -->
+<script src="~/Scripts/jquery-3.4.1.js"></script>
+<script>
+    $(document).ready(function () {
+        GetAll();
+        Estado();
+    });
+
+    function ShowModal() {
+        $('#modalFormulario').modal('show')
+        Vaciar();
+    }
+
+    function Estado() {
+        $.ajax({
+            url: "/Empleado/GetEstado",
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                var html = '';
+                html += ' <option selected value="" disabled>Selecciona un Estado</option>';
+                $.each(result.Objects, function (key, item) {
+                    html += '<option value="' + item.Id + '">' + item.Estado + '</option>';
+                });
+                $('#ddlEstado').html(html);
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    function GetAll() {
+        $.ajax({
+            url: "/Empleado/Get",
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                var html = '';
+                $.each(result.Objects, function (key, item) {
+                    html += '<tr>';
+                    html += '<td><a class="btn btn-warning" onclick="return GetById(' + item.Id + ')"><i class="fa-solid fa-pen-to-square"></i></a>';
+                    html += '<td class ="hidden">' + item.Id + '</td>';
+                    html += '<td>' + item.NumeroNomina + '</td>';
+                    html += '<td>' + item.Nombre + '</td>';
+                    html += '<td>' + item.ApellidoPaterno + '</td>';
+                    html += '<td>' + item.ApellidoMaterno + '</td>';
+                    html += '<td class ="hidden">' + item.Estado.Id + '</td>';
+                    html += '<td>' + item.Estado.Estado + '</td>';
+                    html += '<td><a class="btn btn-danger" onclick="return Delete(' + item.Id + ')"><i class="fa-solid fa-trash"></i></a>';
+                    html += '</tr>';
+                });
+                $('#tableEmpleado tbody').html(html);
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    function GetById(Id) {
+        $.ajax({
+            url: "/Empleado/GetById/" + Id,
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                $("#txtIdEmpleado").val(result.Object.Id);
+                $("#txtNombre").val(result.Object.Nombre);
+                $("#txtPaterno").val(result.Object.ApellidoPaterno);
+                $("#txtMaterno").val(result.Object.ApellidoMaterno);
+                $("#ddlEstado").val(result.Object.Estado.Id);
+
+                $('#modalFormulario').modal('show');
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    function Delete(Id) {
+        if (confirm('¿Estas seguro de eliminar el registro?')) {
+            $.ajax({
+                url: "/Empleado/Delete/" + Id,
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    GetAll();
+                    $('#modalFormulario').modal('hide');
+                },
+                error: function (errormessage) {
+                    alert(errormessage.responseText);
+                }
+            });
+        }
+    }
+
+    function Vaciar() {
+        $("#txtIdEmpleado").val("");
+        $("#txtNombre").val("");
+        $("#txtPaterno").val("");
+        $("#txtMaterno").val("");
+        $("#ddlEstado").val("");
+    }
+
+    function Guardar() {
+        var txtIdEmpleado = $("#txtIdEmpleado").val();
+
+        var action = "";
+        //Asignar el metodo
+        if (txtIdEmpleado == "") {
+            action = "Add";
+        } else {
+            action = "Update";
+        }
+
+        //Crear el JSON
+        var empleado = {
+            Id: $("#txtIdEmpleado").val(),
+            Nombre: $("#txtNombre").val(),
+            ApellidoPaterno: $("#txtPaterno").val(),
+            ApellidoMaterno: $("#txtMaterno").val(),
+            Estado: {
+                Id: $("#ddlEstado").val(),
+                Estado: null
+            },
+            Empleados: null
+        };
+
+        $.ajax({
+            url: "/Empleado/" + action,
+            data: JSON.stringify(empleado),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                GetAll();
+                $('#modalFormulario').modal('hide');
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    function Validar() {
+        var txtNombre = $("#txtNombre").val();
+        var txtPaterno = $("#txtPaterno").val();
+        var txtMaterno = $("#txtMaterno").val();
+        var ddlEstado = $("#ddlEstado").val();
+
+        if (txtNombre == "" | txtPaterno == "" | txtMaterno == "" | ddlEstado < 1) {
+            return alert("Por favor completa los campos restantes");
+        } else {
+            Guardar();
+        }
+    }
+</script>
